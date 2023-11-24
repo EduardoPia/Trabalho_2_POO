@@ -1,4 +1,0 @@
-
-
-class CenaInicial:
-    pass
