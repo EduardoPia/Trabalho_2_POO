@@ -1,4 +1,5 @@
 from vetor2d import Vetor2D
+import pygame
 
 class ConfigJogo:
     DIM_TELA = Vetor2D(900, 800)
