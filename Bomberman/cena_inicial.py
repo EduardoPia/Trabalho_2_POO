@@ -13,7 +13,6 @@ class CenaInicial:
         self.personagem1 = ler_imagem('sprites/chars/pacman-black.png', C_J.PLAYER_SIZE.as_tuple())
         self.personagem2 = ler_imagem('sprites/chars/pacman-black.png', C_J.PLAYER_SIZE.as_tuple())
         self.personagem3 = ler_imagem('sprites/chars/pacman-white.png', C_J.PLAYER_SIZE.as_tuple())
-        self.titulo = ler_imagem('sprites/items/título.png', C_J. TITLE_SIZE.as_tuple())
         self.fogo = ler_imagem('sprites/items/fogo.png', C_J.PLAYER_SIZE.as_tuple())
         self.bomba = ler_imagem('sprites/items/bomba.png', C_J.PLAYER_SIZE.as_tuple())
         self.apertou_para_cima = False
