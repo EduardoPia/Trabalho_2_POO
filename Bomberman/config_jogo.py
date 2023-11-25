@@ -21,6 +21,20 @@ class ConfigJogo:
     BOMBAS_PLAYER1 = 4
     DIST_EXPLOSAO = 3
 
+
+    BLACK = (0,0,0)
+    TITLE_SIZE = Vetor2D(.94*DIM_TELA.x,0.2*DIM_TELA.y)
+    TITLE_POS = Vetor2D((DIM_TELA.x-TITLE_SIZE.x)/2, (.025*DIM_TELA.y+0.025*TITLE_SIZE.y))
+    POS_TXT1_INIT = Vetor2D(450,400)
+    POS_TXT2_INIT = Vetor2D(450,500)
+    POS_PERS1_INIT= Vetor2D(POS_TXT1_INIT.x-1.95*PLAYER_SIZE.x,POS_TXT1_INIT.y)
+    POS_PERS2_INIT = Vetor2D(POS_TXT2_INIT.x-1.3*PLAYER_SIZE.x,POS_TXT2_INIT.y)
+    POS_PERS3_INIT = Vetor2D(POS_TXT2_INIT.x-2.6*PLAYER_SIZE.x,POS_TXT2_INIT.y)
+    pygame.font.init()      
+    fontesys=pygame.font.SysFont(None,80) 
+    TEXTO1 = fontesys.render('1 Player',False,BLACK)
+    TEXTO2 = fontesys.render('2 Players',True,BLACK)
+
     
 
 
