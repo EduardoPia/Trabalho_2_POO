@@ -8,10 +8,11 @@ from cronometro import Cronometro
 
 class Bomb:
     
-    def __init__(self,position:Vetor2D, img_path:str):
+    def __init__(self,position:Vetor2D, img_path:str, player:int):
         self.position = position
         self.image = ler_imagem(img_path,ConfigJogo.TILE_SIZE.as_tuple())
         self.cronometro = Cronometro()
+        self.player = player
         
     def explodiu(self):
         return (self.cronometro.tempo_passado() > ConfigJogo.TEMPO_BOMBA_EXPLOSAO)         

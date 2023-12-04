@@ -67,14 +67,8 @@ class Player:
             if self.orientation.x == ConfigJogo.RIGHT:
                 self.pos.x += ConfigJogo.PLAYER_VEL
             
-            # old_top_left_i_j = Vetor2D(1.0005*(self.position.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,\
-            #                        1.0005*(self.position.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
-            
             new_top_left_i_j = Vetor2D(1.0005*(self.pos.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,\
-                                1.0005*(self.pos.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
-            
-            # new_bottom_right_i_j = Vetor2D(1.0005*(pos_x-ConfigJogo.ARENA_TOP_LEFT.x+ConfigJogo.PLAYER_SIZE.x)//ConfigJogo.TILE_SIZE.x+1,\
-            #                        1.0005*(pos_y-ConfigJogo.ARENA_TOP_LEFT.y+ConfigJogo.PLAYER_SIZE.y)//ConfigJogo.TILE_SIZE.y+1)   
+                                1.0005*(self.pos.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)   
 
             new_top_left = Vetor2D(ConfigJogo.TILE_SIZE.x*new_top_left_i_j.x+ConfigJogo.ARENA_TOP_LEFT.x,\
                                 ConfigJogo.TILE_SIZE.y*new_top_left_i_j.y+ConfigJogo.ARENA_TOP_LEFT.y)
@@ -108,23 +102,23 @@ class Player:
                     
             for chama in chamas:
                 if self.testa_colisao_xy(chama.centro):
-                        print("morreu")
+                        self.morreu = True
                             
                 for i in range(1,chama.dim[0]+1):
                     if self.testa_colisao_xy(Vetor2D(chama.centro.x-i*ConfigJogo.TILE_SIZE.x,chama.centro.y)):
-                            print("morreu_l")
+                            self.morreu = True
                             
                 for i in range(1,chama.dim[1]+1):
                     if self.testa_colisao_xy(Vetor2D(chama.centro.x+i*ConfigJogo.TILE_SIZE.x,chama.centro.y)):
-                            print("morreu_r")
+                            self.morreu = True
                             
                 for i in range(1,chama.dim[2]+1):
                     if self.testa_colisao_xy(Vetor2D(chama.centro.x,chama.centro.y-i*ConfigJogo.TILE_SIZE.y)):
-                            print("morreu_t")
+                            self.morreu = True
                             
                 for i in range(1,chama.dim[3]+1):
                     if self.testa_colisao_xy(Vetor2D(chama.centro.x,chama.centro.y+i*ConfigJogo.TILE_SIZE.y)):
-                            print("morreu_d")
+                            self.morreu = True
             
             
             
@@ -140,4 +134,5 @@ class Player:
                     
 
     def desenha(self, tela):
-        tela.blit(self.img,self.position.as_tuple())
+        if not self.morreu:
+            tela.blit(self.img,self.position.as_tuple())

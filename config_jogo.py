@@ -10,7 +10,7 @@ class ConfigJogo:
     ARENA_CENTER = Vetor2D(TILES_AREA.x/2,TILES_AREA.y/2+BAR_SIZE.y)
     ARENA_TOP_LEFT = Vetor2D(ARENA_CENTER.x-ARENA_AREA.x/2,ARENA_CENTER.y-ARENA_AREA.y/2)
     TILE_SIZE = Vetor2D(ARENA_AREA.x/ARENA_TILES.x,ARENA_AREA.x/ARENA_TILES.x) 
-    PROBABILITY_EMPTY = 0.9
+    PROBABILITY_EMPTY = 0.3
     PLAYER_SIZE = Vetor2D(0.98*TILE_SIZE.x,0.98*TILE_SIZE.y)
     PLAYER_VEL = 0.5
     STOPPED ,UP, DOWN, LEFT, RIGHT = 0,1,-1,2,-2
@@ -23,6 +23,13 @@ class ConfigJogo:
     DIST_EXPLOSAO = 2
     TEMPO_CHAMA = 1
     PLAYER_IMGS = ["sprites/chars/pacman-black.png","sprites/chars/pacman-white.png"]
+    TEMPO_PARTIDA = 180
+    TOUGHNESS_BAR = Vetor2D(0.01,0.05)
+    TAM_ICONES_BARRA = Vetor2D(BAR_SIZE.y/1.7,BAR_SIZE.y/1.7)
+    POS_RELOGIO = Vetor2D(0.05*BAR_SIZE.x,BAR_SIZE.y/2-TAM_ICONES_BARRA.y/2)
+    POS_ICONES_PLAYERS = [Vetor2D(0.30*BAR_SIZE.x,BAR_SIZE.y/2-TAM_ICONES_BARRA.y/2) \
+                          ,Vetor2D(0.45*BAR_SIZE.x,BAR_SIZE.y/2-TAM_ICONES_BARRA.y/2)]
+   
     
     BLACK = (0,0,0)
     TITLE_SIZE = Vetor2D(.94*DIM_TELA.x,0.2*DIM_TELA.y)

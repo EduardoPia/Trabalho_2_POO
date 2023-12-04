@@ -9,6 +9,7 @@ from cronometro import Cronometro
 from vetor2d import Vetor2D
 from bomb import Bomb
 from chama import Chama
+from barra import Barra
 
 class CenaPrincipal:
     def __init__(self, tela:pg.Surface, players:int):
@@ -22,6 +23,7 @@ class CenaPrincipal:
         self.encerrado = False
         self.bombas:List[Bomb] = []
         self.chamas:List[Chama] = []
+        self.barra = Barra()
         self.bomb_sound = pg.mixer.Sound('sprites/items/BOMB_SONG.wav')
             
     def tratamento_player2(self):
@@ -41,7 +43,7 @@ class CenaPrincipal:
                 pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
                 pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
                 self.players[1].bota_bomba()
-                self.bombas.append(Bomb(pos,"sprites/items/bomba.png"))
+                self.bombas.append(Bomb(pos,"sprites/items/bomba.png",1))
             
     def tratamento_player1(self):
         self.players[0].orientation.x = ConfigJogo.STOPPED
@@ -60,7 +62,7 @@ class CenaPrincipal:
                 pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
                 pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
                 self.players[0].bota_bomba()
-                self.bombas.append(Bomb(pos,"sprites/items/bomba.png"))
+                self.bombas.append(Bomb(pos,"sprites/items/bomba.png",0))
      
     def destroy_and_flame(self,bomba:Bomb):
         
@@ -72,6 +74,7 @@ class CenaPrincipal:
             
             if self.mapa.blocos[pos.x-i][pos.y] == ConfigJogo.DESTRUCTABLE:
                 self.mapa.blocos[pos.x-i][pos.y] = ConfigJogo.EMPTY
+                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
                 chama_dim[0] = i
                 break
             elif self.mapa.blocos[pos.x-i][pos.y] == ConfigJogo.INDESTRUCTABLE:
@@ -82,6 +85,7 @@ class CenaPrincipal:
         for i in range(1,ConfigJogo.DIST_EXPLOSAO+1):
             if self.mapa.blocos[pos.x+i][pos.y] == ConfigJogo.DESTRUCTABLE:
                 self.mapa.blocos[pos.x+i][pos.y] = ConfigJogo.EMPTY
+                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
                 chama_dim[1] = i
                 break
             elif self.mapa.blocos[pos.x+i][pos.y] == ConfigJogo.INDESTRUCTABLE:
@@ -92,6 +96,7 @@ class CenaPrincipal:
         for j in range(1,ConfigJogo.DIST_EXPLOSAO+1):
             if self.mapa.blocos[pos.x][pos.y-j] == ConfigJogo.DESTRUCTABLE:
                 self.mapa.blocos[pos.x][pos.y-j] = ConfigJogo.EMPTY
+                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
                 chama_dim[2] = j
                 break
             elif self.mapa.blocos[pos.x][pos.y-j] == ConfigJogo.INDESTRUCTABLE:
@@ -102,6 +107,7 @@ class CenaPrincipal:
         for j in range(1,ConfigJogo.DIST_EXPLOSAO+1):
             if self.mapa.blocos[pos.x][pos.y+j] == ConfigJogo.DESTRUCTABLE:
                 self.mapa.blocos[pos.x][pos.y+j] = ConfigJogo.EMPTY
+                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
                 chama_dim[3] = j
                 break
             elif self.mapa.blocos[pos.x][pos.y+j] == ConfigJogo.INDESTRUCTABLE:
@@ -141,12 +147,14 @@ class CenaPrincipal:
     
     def desenha(self):
         self.mapa.desenha(self.tela)
+        self.barra.desenha(self.tela)
         for chama in self.chamas:
             chama.desenha(self.tela)
         for bomba in self.bombas:
             bomba.desenha(self.tela)
         for player in self.players:
             player.desenha(self.tela)
+        
 
         pg.display.flip()
             
