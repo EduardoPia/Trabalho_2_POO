@@ -56,7 +56,7 @@ class CenaInicial:
     def desenha(self):
         
         #PREENCHE A TELA INICIAL
-        pg.display.set_caption("BOMBERMAN - TELA INICIAL - GUILHERMEZINHO CRIA DO ERREJOTA")
+        pg.display.set_caption("BOMBERMAN")
         self.tela.blit(self.background,(0,0))
         self.tela.blit(C_J.TEXTO1,C_J.POS_TXT1_INIT.as_tuple())
         self.tela.blit(C_J.TEXTO2,C_J.POS_TXT2_INIT.as_tuple())

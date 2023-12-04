@@ -68,11 +68,24 @@ class CenaPrincipal:
         
         pos = Vetor2D(int((bomba.position.x-ConfigJogo.ARENA_TOP_LEFT.x)/ConfigJogo.TILE_SIZE.x+0.0001),int((bomba.position.y-ConfigJogo.ARENA_TOP_LEFT.y)/ConfigJogo.TILE_SIZE.y+0.0001))
         chama_dim = [ConfigJogo.DIST_EXPLOSAO,ConfigJogo.DIST_EXPLOSAO,ConfigJogo.DIST_EXPLOSAO,ConfigJogo.DIST_EXPLOSAO] #left, right, up, down
+        player_positions:List(Vetor2D) = []
+        for player in self.players:
+            player_positions.append(Vetor2D(1.0005*(player.position.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,\
+                                1.0005*(player.position.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y))
         
         # left   
         for i in range(1,ConfigJogo.DIST_EXPLOSAO+1):
             
-            if self.mapa.blocos[pos.x-i][pos.y] == ConfigJogo.DESTRUCTABLE:
+            sair = False
+            for player in player_positions:
+                if player.x+1 == pos.x-i and player.y == pos.y:
+                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
+                    chama_dim[0] = i
+                    sair = True
+                    break
+            if sair:
+                break
+            if (self.mapa.blocos[pos.x-i][pos.y] == ConfigJogo.DESTRUCTABLE):
                 self.mapa.blocos[pos.x-i][pos.y] = ConfigJogo.EMPTY
                 self.barra.pontuacoes_icones_players[bomba.player][0] += 1
                 chama_dim[0] = i
@@ -83,6 +96,16 @@ class CenaPrincipal:
         
         # right
         for i in range(1,ConfigJogo.DIST_EXPLOSAO+1):
+            
+            sair = False
+            for player in player_positions:
+                if player.x == pos.x+i and player.y == pos.y:
+                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
+                    chama_dim[1] = i
+                    sair = True
+                    break
+            if sair:
+                break
             if self.mapa.blocos[pos.x+i][pos.y] == ConfigJogo.DESTRUCTABLE:
                 self.mapa.blocos[pos.x+i][pos.y] = ConfigJogo.EMPTY
                 self.barra.pontuacoes_icones_players[bomba.player][0] += 1
@@ -94,6 +117,16 @@ class CenaPrincipal:
             
         # up
         for j in range(1,ConfigJogo.DIST_EXPLOSAO+1):
+            
+            sair = False
+            for player in player_positions:
+                if player.x == pos.x and player.y-j+1 == pos.y:
+                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
+                    chama_dim[2] = i
+                    sair = True
+                    break
+            if sair:
+                break
             if self.mapa.blocos[pos.x][pos.y-j] == ConfigJogo.DESTRUCTABLE:
                 self.mapa.blocos[pos.x][pos.y-j] = ConfigJogo.EMPTY
                 self.barra.pontuacoes_icones_players[bomba.player][0] += 1
@@ -105,6 +138,16 @@ class CenaPrincipal:
         
         # down    
         for j in range(1,ConfigJogo.DIST_EXPLOSAO+1):
+            
+            sair = False
+            for player in player_positions:
+                if player.x == pos.x and player.y == pos.y+j:
+                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
+                    chama_dim[3] = j
+                    sair = True
+                    break
+            if sair:
+                break
             if self.mapa.blocos[pos.x][pos.y+j] == ConfigJogo.DESTRUCTABLE:
                 self.mapa.blocos[pos.x][pos.y+j] = ConfigJogo.EMPTY
                 self.barra.pontuacoes_icones_players[bomba.player][0] += 1
