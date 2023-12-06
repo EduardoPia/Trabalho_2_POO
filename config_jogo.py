@@ -20,7 +20,7 @@ class ConfigJogo:
     TEMPO_BOMBA_EXPLOSAO = 2
     TEMPO_BOMBA_RECARGA = 0.2
     BOMBAS_PLAYER1 = 4
-    DIST_EXPLOSAO = 5
+    DIST_EXPLOSAO = 3
     TEMPO_CHAMA = 1
     PLAYER_IMGS = ["sprites/chars/pacman-black.png","sprites/chars/pacman-white.png"]
     TEMPO_PARTIDA = 120
@@ -29,6 +29,7 @@ class ConfigJogo:
     POS_RELOGIO = Vetor2D(0.05*BAR_SIZE.x,BAR_SIZE.y/2-TAM_ICONES_BARRA.y/2)
     POS_ICONES_PLAYERS = [Vetor2D(0.30*BAR_SIZE.x,BAR_SIZE.y/2-TAM_ICONES_BARRA.y/2) \
                           ,Vetor2D(0.45*BAR_SIZE.x,BAR_SIZE.y/2-TAM_ICONES_BARRA.y/2)]
+    TOLERANCIA_BOMBA = 10
    
     
     BLACK = (0,0,0)

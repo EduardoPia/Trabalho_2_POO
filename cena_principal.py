@@ -1,6 +1,7 @@
 import pygame as pg
 import sys
 from typing import List
+from copy import deepcopy
 
 from mapa import Mapa
 from player import Player
@@ -20,49 +21,50 @@ class CenaPrincipal:
             self.players.append(Player(ConfigJogo.PLAYERS_POS[i],ConfigJogo.PLAYER_IMGS[i]))
         self.cronometro = Cronometro()
         self.cronometro.reset()
-        self.encerrado = False
         self.bombas:List[Bomb] = []
         self.chamas:List[Chama] = []
         self.barra = Barra()
         self.bomb_sound = pg.mixer.Sound('sprites/items/BOMB_SONG.wav')
             
     def tratamento_player2(self):
-        self.players[1].orientation.x = ConfigJogo.STOPPED
-        self.players[1].orientation.y = ConfigJogo.STOPPED
-        if pg.key.get_pressed()[pg.K_UP]:
-            self.players[1].orientation.y += ConfigJogo.UP
-        if pg.key.get_pressed()[pg.K_DOWN]:
-            self.players[1].orientation.y  += ConfigJogo.DOWN
-        if pg.key.get_pressed()[pg.K_LEFT]:
-            self.players[1].orientation.x  += ConfigJogo.LEFT
-        if pg.key.get_pressed()[pg.K_RIGHT]:
-            self.players[1].orientation.x += ConfigJogo.RIGHT
-        if pg.key.get_pressed()[pg.K_0] or pg.key.get_pressed()[pg.K_KP0]:
-            if (self.players[1].bombas_postas<ConfigJogo.BOMBAS_PLAYER1) and (self.players[1].cronometro_recarga.tempo_passado() > ConfigJogo.TEMPO_BOMBA_RECARGA):
-                center_player = self.players[1].position + Vetor2D(0.5*ConfigJogo.PLAYER_SIZE.x,0.5*ConfigJogo.PLAYER_SIZE.y)
-                pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
-                pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
-                self.players[1].bota_bomba()
-                self.bombas.append(Bomb(pos,"sprites/items/bomba.png",1))
+        if not self.players[1].morreu:
+            self.players[1].orientation.x = ConfigJogo.STOPPED
+            self.players[1].orientation.y = ConfigJogo.STOPPED
+            if pg.key.get_pressed()[pg.K_UP]:
+                self.players[1].orientation.y += ConfigJogo.UP
+            if pg.key.get_pressed()[pg.K_DOWN]:
+                self.players[1].orientation.y  += ConfigJogo.DOWN
+            if pg.key.get_pressed()[pg.K_LEFT]:
+                self.players[1].orientation.x  += ConfigJogo.LEFT
+            if pg.key.get_pressed()[pg.K_RIGHT]:
+                self.players[1].orientation.x += ConfigJogo.RIGHT
+            if pg.key.get_pressed()[pg.K_0] or pg.key.get_pressed()[pg.K_KP0]:
+                if (self.players[1].bombas_postas<ConfigJogo.BOMBAS_PLAYER1) and (self.players[1].cronometro_recarga.tempo_passado() > ConfigJogo.TEMPO_BOMBA_RECARGA):
+                    center_player = self.players[1].position + Vetor2D(0.5*ConfigJogo.PLAYER_SIZE.x,0.5*ConfigJogo.PLAYER_SIZE.y)
+                    pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
+                    pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
+                    self.players[1].bota_bomba()
+                    self.bombas.append(Bomb(pos,"sprites/items/bomba.png",1))
             
     def tratamento_player1(self):
-        self.players[0].orientation.x = ConfigJogo.STOPPED
-        self.players[0].orientation.y = ConfigJogo.STOPPED
-        if pg.key.get_pressed()[pg.K_w]:
-            self.players[0].orientation.y += ConfigJogo.UP
-        if pg.key.get_pressed()[pg.K_s]:
-            self.players[0].orientation.y  += ConfigJogo.DOWN
-        if pg.key.get_pressed()[pg.K_a]:
-            self.players[0].orientation.x  += ConfigJogo.LEFT
-        if pg.key.get_pressed()[pg.K_d]:
-            self.players[0].orientation.x += ConfigJogo.RIGHT
-        if pg.key.get_pressed()[pg.K_SPACE]:
-            if (self.players[0].bombas_postas<ConfigJogo.BOMBAS_PLAYER1) and (self.players[0].cronometro_recarga.tempo_passado() > ConfigJogo.TEMPO_BOMBA_RECARGA):
-                center_player = self.players[0].position + Vetor2D(0.5*ConfigJogo.PLAYER_SIZE.x,0.5*ConfigJogo.PLAYER_SIZE.y)
-                pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
-                pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
-                self.players[0].bota_bomba()
-                self.bombas.append(Bomb(pos,"sprites/items/bomba.png",0))
+        if not self.players[0].morreu:
+            self.players[0].orientation.x = ConfigJogo.STOPPED
+            self.players[0].orientation.y = ConfigJogo.STOPPED
+            if pg.key.get_pressed()[pg.K_w]:
+                self.players[0].orientation.y += ConfigJogo.UP
+            if pg.key.get_pressed()[pg.K_s]:
+                self.players[0].orientation.y  += ConfigJogo.DOWN
+            if pg.key.get_pressed()[pg.K_a]:
+                self.players[0].orientation.x  += ConfigJogo.LEFT
+            if pg.key.get_pressed()[pg.K_d]:
+                self.players[0].orientation.x += ConfigJogo.RIGHT
+            if pg.key.get_pressed()[pg.K_SPACE]:
+                if (self.players[0].bombas_postas<ConfigJogo.BOMBAS_PLAYER1) and (self.players[0].cronometro_recarga.tempo_passado() > ConfigJogo.TEMPO_BOMBA_RECARGA):
+                    center_player = self.players[0].position + Vetor2D(0.5*ConfigJogo.PLAYER_SIZE.x,0.5*ConfigJogo.PLAYER_SIZE.y)
+                    pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
+                    pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
+                    self.players[0].bota_bomba()
+                    self.bombas.append(Bomb(pos,"sprites/items/bomba.png",0))
      
     def destroy_and_flame(self,bomba:Bomb):
         
@@ -120,9 +122,9 @@ class CenaPrincipal:
             
             sair = False
             for player in player_positions:
-                if player.x == pos.x and player.y-j+1 == pos.y:
+                if player.x == pos.x and player.y-j == pos.y:
                     self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                    chama_dim[2] = i
+                    chama_dim[2] = j
                     sair = True
                     break
             if sair:
@@ -201,8 +203,17 @@ class CenaPrincipal:
 
         pg.display.flip()
             
+    def encerrado(self):
+        i = 0
+        for player in self.players:
+            if player.morreu:
+                i += 1
+        if i == len(self.players):
+            return True
+        return False
+
     def executar(self):
-        while not self.encerrado:
+        while not self.encerrado():
             if self.cronometro.tempo_passado() > ConfigJogo.TEMPO_JOGO:
                 self.cronometro.reset()
                 self.tratamento_eventos()

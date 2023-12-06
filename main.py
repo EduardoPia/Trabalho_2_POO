@@ -1,4 +1,4 @@
-
+ 
 from bomberman import Bomberman
 
 def main():

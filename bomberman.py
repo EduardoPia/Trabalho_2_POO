@@ -18,10 +18,10 @@ class Bomberman:
         cena_inicial = CenaInicial(self.tela)
         cena_inicial.executar()
         
-        # while True:
-        cena_principal = CenaPrincipal(self.tela,cena_inicial.num_player)
-        cena_principal.executar()
+        while True:
+            cena_principal = CenaPrincipal(self.tela,cena_inicial.num_player)
+            cena_principal.executar()
             
-        #     cena_final = CenaFinal(self.tela, cena_principal)
-        #     cena_final.executar()
+            # cena_final = CenaFinal(self.tela, cena_principal)
+            # cena_final.executar()
             

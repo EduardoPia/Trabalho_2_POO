@@ -89,16 +89,19 @@ class Player:
             for bomba in bombas:
                 if self.testa_colisao_x(bomba.position):
                     if dist(self.pos,bomba.position) < dist(self.position,bomba.position):
-                        self.pos.x = self.position.x
+                        if dist(self.pos,bomba.position) > ConfigJogo.TOLERANCIA_BOMBA:    
+                            self.pos.x = self.position.x
                     
                 if self.testa_colisao_y(bomba.position):
                     if dist(self.pos,bomba.position) < dist(self.position,bomba.position):
-                        self.pos.y = self.position.y
+                        if dist(self.pos,bomba.position) > ConfigJogo.TOLERANCIA_BOMBA:
+                            self.pos.y = self.position.y
                 
                 if self.testa_colisao_xy(bomba.position):
                     if dist(self.pos,bomba.position) < dist(self.position,bomba.position):
-                        self.pos.x = self.position.y
-                        self.pos.y = self.position.x
+                        if dist(self.pos,bomba.position) > ConfigJogo.TOLERANCIA_BOMBA:
+                            self.pos.x = self.position.y
+                            self.pos.y = self.position.x
                     
             for chama in chamas:
                 if self.testa_colisao_xy(chama.centro):

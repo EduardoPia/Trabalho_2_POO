@@ -12,7 +12,7 @@ class Barra:
             player_img = ler_imagem(ConfigJogo.PLAYER_IMGS[i],ConfigJogo.TAM_ICONES_BARRA.as_tuple())
             self.pontuacoes_icones_players.append([0,player_img])
         self.cronometro = Cronometro()
-        self.relogio = ler_imagem("sprites\map\Relogio.png",ConfigJogo.TAM_ICONES_BARRA.as_tuple())
+        self.relogio = ler_imagem("sprites/map/Relogio.png",ConfigJogo.TAM_ICONES_BARRA.as_tuple())
         self.fonte = pg.font.Font(None,48)  # None usa a fonte padrão, tamanho 36
 
     
