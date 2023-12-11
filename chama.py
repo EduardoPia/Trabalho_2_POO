@@ -10,7 +10,7 @@ from vetor2d import Vetor2D
 class Chama:
     def __init__(self,centro:Vetor2D,dim:List[int]):
         self.centro = centro
-        self.dim = dim
+        self.dim = dim # left, up, right, down
         self.cronometro = Cronometro()
         self.tiles = []
         self.tiles.append([ler_imagem("sprites/items/Fogo.png",(ConfigJogo.TILE_SIZE+Vetor2D(1,1)).as_tuple()),self.centro])
