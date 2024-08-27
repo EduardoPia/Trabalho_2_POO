@@ -11,8 +11,7 @@ class Bomberman:
         
         pg.init()
         
-        self.tela = pg.display.set_mode((ConfigJogo.DIM_TELA.x,ConfigJogo.DIM_TELA.y))
-    
+        self.tela:pg.Surface = pg.display.set_mode((ConfigJogo.DIM_TELA.x,ConfigJogo.DIM_TELA.y))
         
     def executar(self):
         cena_inicial = CenaInicial(self.tela)
@@ -22,6 +21,6 @@ class Bomberman:
             cena_principal = CenaPrincipal(self.tela,cena_inicial.num_player)
             cena_principal.executar()
             
-            # cena_final = CenaFinal(self.tela, cena_principal)
-            # cena_final.executar()
+            cena_final = CenaFinal(self.tela, cena_principal.mapa.barra.pontuacoes_icones_players,cena_principal.objects)
+            cena_final.executar()
             

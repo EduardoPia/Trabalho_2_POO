@@ -1,221 +1,129 @@
+from typing import List
 import pygame as pg
 import sys
-from typing import List
-from copy import deepcopy
 
-from mapa import Mapa
-from player import Player
+from game_object import GameObject
 from config_jogo import ConfigJogo
 from cronometro import Cronometro
-from vetor2d import Vetor2D
-from bomb import Bomb
-from chama import Chama
-from barra import Barra
+from player import Player
+from mapa import Mapa
+from quartel import Quartel
+from alienigina import Alienigina
+from fantasma import Fantasma
+from bomba import Bomba
+from utils import colisao_rect_circle
 
 class CenaPrincipal:
-    def __init__(self, tela:pg.Surface, players:int):
-        self.tela = tela
-        self.mapa = Mapa()
-        self.players:List[Player] = []
-        for i in range(players):
-            self.players.append(Player(ConfigJogo.PLAYERS_POS[i],ConfigJogo.PLAYER_IMGS[i]))
-        self.cronometro = Cronometro()
-        self.cronometro.reset()
-        self.bombas:List[Bomb] = []
-        self.chamas:List[Chama] = []
-        self.barra = Barra()
-        self.bomb_sound = pg.mixer.Sound('sprites/items/BOMB_SONG.wav')
-            
-    def tratamento_player2(self):
-        if not self.players[1].morreu:
-            self.players[1].orientation.x = ConfigJogo.STOPPED
-            self.players[1].orientation.y = ConfigJogo.STOPPED
-            if pg.key.get_pressed()[pg.K_UP]:
-                self.players[1].orientation.y += ConfigJogo.UP
-            if pg.key.get_pressed()[pg.K_DOWN]:
-                self.players[1].orientation.y  += ConfigJogo.DOWN
-            if pg.key.get_pressed()[pg.K_LEFT]:
-                self.players[1].orientation.x  += ConfigJogo.LEFT
-            if pg.key.get_pressed()[pg.K_RIGHT]:
-                self.players[1].orientation.x += ConfigJogo.RIGHT
-            if pg.key.get_pressed()[pg.K_0] or pg.key.get_pressed()[pg.K_KP0]:
-                if (self.players[1].bombas_postas<ConfigJogo.BOMBAS_PLAYER1) and (self.players[1].cronometro_recarga.tempo_passado() > ConfigJogo.TEMPO_BOMBA_RECARGA):
-                    center_player = self.players[1].position + Vetor2D(0.5*ConfigJogo.PLAYER_SIZE.x,0.5*ConfigJogo.PLAYER_SIZE.y)
-                    pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
-                    pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
-                    self.players[1].bota_bomba()
-                    self.bombas.append(Bomb(pos,"sprites/items/bomba.png",1))
-            
-    def tratamento_player1(self):
-        if not self.players[0].morreu:
-            self.players[0].orientation.x = ConfigJogo.STOPPED
-            self.players[0].orientation.y = ConfigJogo.STOPPED
-            if pg.key.get_pressed()[pg.K_w]:
-                self.players[0].orientation.y += ConfigJogo.UP
-            if pg.key.get_pressed()[pg.K_s]:
-                self.players[0].orientation.y  += ConfigJogo.DOWN
-            if pg.key.get_pressed()[pg.K_a]:
-                self.players[0].orientation.x  += ConfigJogo.LEFT
-            if pg.key.get_pressed()[pg.K_d]:
-                self.players[0].orientation.x += ConfigJogo.RIGHT
-            if pg.key.get_pressed()[pg.K_SPACE]:
-                if (self.players[0].bombas_postas<ConfigJogo.BOMBAS_PLAYER1) and (self.players[0].cronometro_recarga.tempo_passado() > ConfigJogo.TEMPO_BOMBA_RECARGA):
-                    center_player = self.players[0].position + Vetor2D(0.5*ConfigJogo.PLAYER_SIZE.x,0.5*ConfigJogo.PLAYER_SIZE.y)
-                    pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
-                    pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
-                    self.players[0].bota_bomba()
-                    self.bombas.append(Bomb(pos,"sprites/items/bomba.png",0))
-     
-    def destroy_and_flame(self,bomba:Bomb):
+    def __init__(self,tela:pg.Surface,num_player:int):
+        self.objects:List[GameObject] = []
+        self.mapa:Mapa = Mapa()
+        self.tela:pg.Surface = tela
+        self.cronometro:Cronometro = Cronometro()
+        self.tempo_jogo:Cronometro = Cronometro()
         
-        pos = Vetor2D(int((bomba.position.x-ConfigJogo.ARENA_TOP_LEFT.x)/ConfigJogo.TILE_SIZE.x+0.0001),int((bomba.position.y-ConfigJogo.ARENA_TOP_LEFT.y)/ConfigJogo.TILE_SIZE.y+0.0001))
-        chama_dim = [ConfigJogo.DIST_EXPLOSAO,ConfigJogo.DIST_EXPLOSAO,ConfigJogo.DIST_EXPLOSAO,ConfigJogo.DIST_EXPLOSAO] #left, right, up, down
-        player_positions:List(Vetor2D) = []
-        for player in self.players:
-            player_positions.append(Vetor2D(1.0005*(player.position.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,\
-                                1.0005*(player.position.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y))
+        ## Cria os players
+        for i in range(num_player):
+            new_player = Player(ConfigJogo.PLAYERS_POS[i],i)
+            self.objects.append(new_player)
+            
+        ## Cria o quartel
+        self.objects.append(Quartel())
         
-        # left   
-        for i in range(1,ConfigJogo.DIST_EXPLOSAO+1):
-            
-            sair = False
-            for player in player_positions:
-                if player.x+1 == pos.x-i and player.y == pos.y:
-                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                    chama_dim[0] = i
-                    sair = True
-                    break
-            if sair:
-                break
-            if (self.mapa.blocos[pos.x-i][pos.y] == ConfigJogo.DESTRUCTABLE):
-                self.mapa.blocos[pos.x-i][pos.y] = ConfigJogo.EMPTY
-                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                chama_dim[0] = i
-                break
-            elif self.mapa.blocos[pos.x-i][pos.y] == ConfigJogo.INDESTRUCTABLE:
-                chama_dim[0] = i-1
-                break
+    def desacelera_player_bomba(self):
         
-        # right
-        for i in range(1,ConfigJogo.DIST_EXPLOSAO+1):
-            
-            sair = False
-            for player in player_positions:
-                if player.x == pos.x+i and player.y == pos.y:
-                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                    chama_dim[1] = i
-                    sair = True
-                    break
-            if sair:
-                break
-            if self.mapa.blocos[pos.x+i][pos.y] == ConfigJogo.DESTRUCTABLE:
-                self.mapa.blocos[pos.x+i][pos.y] = ConfigJogo.EMPTY
-                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                chama_dim[1] = i
-                break
-            elif self.mapa.blocos[pos.x+i][pos.y] == ConfigJogo.INDESTRUCTABLE:
-                chama_dim[1] = i-1
-                break
-            
-        # up
-        for j in range(1,ConfigJogo.DIST_EXPLOSAO+1):
-            
-            sair = False
-            for player in player_positions:
-                if player.x == pos.x and player.y-j == pos.y:
-                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                    chama_dim[2] = j
-                    sair = True
-                    break
-            if sair:
-                break
-            if self.mapa.blocos[pos.x][pos.y-j] == ConfigJogo.DESTRUCTABLE:
-                self.mapa.blocos[pos.x][pos.y-j] = ConfigJogo.EMPTY
-                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                chama_dim[2] = j
-                break
-            elif self.mapa.blocos[pos.x][pos.y-j] == ConfigJogo.INDESTRUCTABLE:
-                chama_dim[2] = j-1
-                break
-        
-        # down    
-        for j in range(1,ConfigJogo.DIST_EXPLOSAO+1):
-            
-            sair = False
-            for player in player_positions:
-                if player.x == pos.x and player.y == pos.y+j:
-                    self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                    chama_dim[3] = j
-                    sair = True
-                    break
-            if sair:
-                break
-            if self.mapa.blocos[pos.x][pos.y+j] == ConfigJogo.DESTRUCTABLE:
-                self.mapa.blocos[pos.x][pos.y+j] = ConfigJogo.EMPTY
-                self.barra.pontuacoes_icones_players[bomba.player][0] += 1
-                chama_dim[3] = j
-                break
-            elif self.mapa.blocos[pos.x][pos.y+j] == ConfigJogo.INDESTRUCTABLE:
-                chama_dim[3] = j-1
-                break
-            
-        self.chamas.append(Chama(bomba.position,chama_dim))
-     
-    def som_bomba(self):
-        self.bomb_sound.play()
-            
-    def tratamento_eventos(self):
+        ## Reseta a velocidade de cada player/bomba
+        bombas_player:List[GameObject] = []
+        for object in self.objects:
+            if type(object) == Bomba or type(object) == Player:
+                object.tempo = 1
+                bombas_player.append(object)
+                
+        ## Ajusta a velocidade do tempo de cada player/bomba com base em cada fantasma
+        for object in self.objects:
+            if type(object) == Fantasma:
+                for obj in bombas_player:
+                    if colisao_rect_circle(obj.position,obj.size,object.center,ConfigJogo.CIRCLE_DIAMENTER/2):
+                        obj.tempo = obj.tempo*object.tipo_aura
+                     
+    def tratamento(self):
         pg.event.get()
 
         # evento de saida
         if pg.key.get_pressed()[pg.K_ESCAPE]:
             sys.exit(0)
-        
-        
-        self.tratamento_player1()
-        if len(self.players) > 1:
-            self.tratamento_player2()
             
-    def atualiza_estado(self):
-        for player in self.players:
-            player.atualizar(self.mapa.blocos,self.bombas, self.chamas) 
+        for object in self.objects:
+            object.tratamento()
+            
+    def atualizar(self):
+        ## Atualiza a velocidade da passagem do tempo para bombas e players com base em fantasmas
+        self.desacelera_player_bomba()
         
-        for bomba in self.bombas:
-            if bomba.explodiu(): # remover destrutiveis, criar chama e depois remover bomba
-                self.destroy_and_flame(bomba)
-                self.bombas.remove(bomba)
-                self.som_bomba()
-        
-        for chama in self.chamas:
-            if chama.terminou():
-                self.chamas.remove(chama)
-    
-    def desenha(self):
-        self.mapa.desenha(self.tela)
-        self.barra.desenha(self.tela)
-        for chama in self.chamas:
-            chama.desenha(self.tela)
-        for bomba in self.bombas:
-            bomba.desenha(self.tela)
-        for player in self.players:
-            player.desenha(self.tela)
-        
+        for object in self.objects:
+            object.atualizar(self.objects, self.mapa)
 
+            ## remover objetos que o objeto falou para remover
+            for objeto in object.remover[1]:
+                remova = objeto[0] # Armazena o objeto que deve ser removido
+                if remova in self.objects: # Se esse objeto existir na lista do jogo, analisa para removê-lo
+                    
+                    # Tentar remover o quartel nada mais é que reduzir suas vidas
+                    if type(remova) == Quartel:
+                        # Esse timer existe para que um quartel não possa ser atingido por várias bombas ao mesmo tempo
+                        if remova.timer_immune.tempo_passado() > ConfigJogo.TEMPO_IMMUNE:
+                            remova.timer_immune.reset()
+                            remova.vida = remova.vida - 1
+                            # Se acabarem as vidas ele pode então ser removido
+                            if remova.vida == 0:
+                                self.mapa.barra.pontuacoes_icones_players[objeto[1]][0] += 100
+                                self.objects.remove(remova)
+                    else:
+                        # Caso remova um inimigo adiciona pontuação ao player
+                        if type(remova) == Fantasma:
+                            self.mapa.barra.pontuacoes_icones_players[objeto[1]][0] += 10
+                        elif type(remova) == Alienigina:
+                            self.mapa.barra.pontuacoes_icones_players[objeto[1]][0] += 10
+                        self.objects.remove(remova)
+                object.remover[1].remove(objeto)
+            ## Remove objeto caso ele tenha falado para se remover
+            if  object.remover[0]:
+                self.objects.remove(object)
+           
+    def desenha(self):
+        # Desenha o mapa e depois os objetos
+        self.mapa.desenhar(self.tela)
+        for object in self.objects:
+            object.desenhar(self.tela)
+        
         pg.display.flip()
             
     def encerrado(self):
-        i = 0
-        for player in self.players:
-            if player.morreu:
-                i += 1
-        if i == len(self.players):
+        ## Casos para que o jogo encerre
+        
+        # Caso o tempo acabe
+        if self.tempo_jogo.tempo_passado() > ConfigJogo.TEMPO_PARTIDA:
             return True
-        return False
-
+        
+        # Caso nao tenha mais quartel ou jogadores
+        tem_quartel = False
+        tem_player = False
+        for object in self.objects:
+            if type(object) == Player:
+                tem_player = True
+            elif type(object) == Quartel:
+                tem_quartel = True
+        if not tem_quartel or not tem_player:
+            return True
+        else:
+            return False
+            
     def executar(self):
+        ## Loop principal
         while not self.encerrado():
             if self.cronometro.tempo_passado() > ConfigJogo.TEMPO_JOGO:
                 self.cronometro.reset()
-                self.tratamento_eventos()
-                self.atualiza_estado()
+                self.tratamento()
+                self.atualizar()
                 self.desenha()
+            
+        

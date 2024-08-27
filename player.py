@@ -1,141 +1,108 @@
-
-from typing import Tuple, List
 import pygame as pg
+from typing import List
 
+from game_object import GameObject
 from config_jogo import ConfigJogo
 from vetor2d import Vetor2D
-from utils import ler_imagem, dist
-from bomb import Bomb
+from utils import ler_imagem,resultado_colisao, testa_colisao, dist
 from cronometro import Cronometro
-from chama import Chama
+from bomba import Bomba
+from mapa import Mapa
+from projetil import Projetil
 
-class Player:
-    def __init__(self, position: Vetor2D, img_path:str):
-        self.position = position
-        self.img = ler_imagem(img_path,ConfigJogo.PLAYER_SIZE.as_tuple())
-        self.cronometro_recarga = Cronometro() # conta recarga da bomba
-        self.cronometro_explosao = Cronometro()
-        self.tempo_bombas = []
-        self.bombas_postas = 0
-        self.orientation = Vetor2D(ConfigJogo.STOPPED,ConfigJogo.STOPPED)
-        self.pos = Vetor2D(self.position.x,self.position.y)
-        self.morreu = False
+class Player(GameObject):
+    def __init__(self,position:Vetor2D, player:int):
+        super().__init__(position,ConfigJogo.PLAYER_SIZE, True, True)
+        self.player:int = player # Qual o player
+        self.img:pg.Surface = ler_imagem(ConfigJogo.PLAYER_IMGS[player],self.size.as_tuple()) # Img player
+        self.cronometro_recarga:Cronometro = Cronometro() # Conta recarga da bomba
+        self.bombas_postas:int = 0 # Numero de bombas postas
+        self.orientation:Vetor2D = Vetor2D(ConfigJogo.STOPPED,ConfigJogo.STOPPED) # orientação
+        self.pos:Vetor2D = Vetor2D(self.position.x,self.position.y) # Posição depois de andar
+        self.botar_bomba:bool = False # Indica que foi requisitado botar uma bomba
+        self.tempo:int = 1 # Velocidade de passagem do tempo (afetada pelo fantasma)
 
-    def bota_bomba(self):
-        self.cronometro_recarga.reset()
-        self.bombas_postas += 1
-        self.tempo_bombas.append(self.cronometro_explosao.tempo_passado())
-        
-    def testa_colisao_x(self,posicao_teste:Vetor2D) -> bool:
-        
-            if ((posicao_teste.x-ConfigJogo.PLAYER_SIZE.x) < self.pos.x) and \
-                ((posicao_teste.x+ConfigJogo.TILE_SIZE.x) > self.pos.x) and \
-                ((posicao_teste.y-ConfigJogo.PLAYER_SIZE.y) < self.position.y) and \
-                ((posicao_teste.y+ConfigJogo.TILE_SIZE.y) > self.position.y):
-                    return True
-            return False
-        
-    def testa_colisao_y(self,posicao_teste:Vetor2D) -> bool:
+    def tratamento(self):
+        ## Reseta orientação e botar_bomba, depois detecta se houve algum comando do player
+        self.orientation.x = ConfigJogo.STOPPED
+        self.orientation.y = ConfigJogo.STOPPED
+        self.botar_bomba = False
+        if pg.key.get_pressed()[ConfigJogo.CONTROLS[self.player][0]]:
+            self.orientation.y += ConfigJogo.UP
+        if pg.key.get_pressed()[ConfigJogo.CONTROLS[self.player][1]]:
+            self.orientation.y  += ConfigJogo.DOWN
+        if pg.key.get_pressed()[ConfigJogo.CONTROLS[self.player][2]]:
+            self.orientation.x  += ConfigJogo.LEFT
+        if pg.key.get_pressed()[ConfigJogo.CONTROLS[self.player][3]]:
+            self.orientation.x += ConfigJogo.RIGHT
+        if pg.key.get_pressed()[ConfigJogo.CONTROLS[self.player][4]]:
+            self.botar_bomba = True
                 
-            if ((posicao_teste.x-ConfigJogo.PLAYER_SIZE.x) < self.position.x) and \
-                ((posicao_teste.x+ConfigJogo.TILE_SIZE.x) > self.position.x) and \
-                ((posicao_teste.y-ConfigJogo.PLAYER_SIZE.y) < self.pos.y) and \
-                ((posicao_teste.y+ConfigJogo.TILE_SIZE.y) > self.pos.y):
-                    return True
-            return False
+    def atualizar(self, lista: List[GameObject], mapa:Mapa):
         
-    def testa_colisao_xy(self,posicao_teste:Vetor2D) -> bool:
-                   
-            if ((posicao_teste.x-ConfigJogo.PLAYER_SIZE.x) < self.pos.x) and \
-                ((posicao_teste.x+ConfigJogo.TILE_SIZE.x) > self.pos.x) and \
-                ((posicao_teste.y-ConfigJogo.PLAYER_SIZE.y) < self.pos.y) and \
-                ((posicao_teste.y+ConfigJogo.TILE_SIZE.y) > self.pos.y):
-                    return True
-            return False
+        ## Conta o número de bombas postas por esse player e morte por projetil
+        self.bombas_postas = 0
+        for object in lista:
+            if type(object) == Bomba:
+                if object.player == self.player:
+                    self.bombas_postas += 1 
+            elif type(object) == Projetil:
+                if testa_colisao(object.position,object.size,self.position,self.size):
+                    self.remover[0] = True
+        
+        ## Checa se a bomba deve ser colocada e a coloca, se possível
+        if self.botar_bomba and (self.bombas_postas<ConfigJogo.BOMBAS_PLAYER) and (self.cronometro_recarga.tempo_passado() > ConfigJogo.TEMPO_BOMBA_RECARGA):
+            self.cronometro_recarga.reset()
+            self.botar_bomba = False
+            center_player = self.position + Vetor2D(0.5*ConfigJogo.PLAYER_SIZE.x,0.5*ConfigJogo.PLAYER_SIZE.y)
+            pos_grid = Vetor2D((center_player.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,(center_player.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)
+            pos = Vetor2D(pos_grid.x*ConfigJogo.TILE_SIZE.x+ConfigJogo.ARENA_TOP_LEFT.x,pos_grid.y*ConfigJogo.TILE_SIZE.y+ConfigJogo.ARENA_TOP_LEFT.y)
+            botar = True
+            for object in lista:
+                if (type(object) == Bomba) and (object.position == pos):
+                    botar = False
+            if botar:        
+                lista.append(Bomba(pos,ConfigJogo.TILE_SIZE,self.player))    
+           
+        ## Faz o movimento 
+        self.pos.x = self.position.x
+        self.pos.y = self.position.y
 
-    def atualizar(self, blocos:List[List[int]],bombas:List[Bomb], chamas:List[Chama]):
-        if not self.morreu:
-            self.pos.x = self.position.x
-            self.pos.y = self.position.y
+        if self.orientation.y == ConfigJogo.UP:
+            self.pos.y += -ConfigJogo.PLAYER_VEL*self.tempo
+        if self.orientation.y == ConfigJogo.DOWN:
+            self.pos.y += ConfigJogo.PLAYER_VEL*self.tempo
+        if self.orientation.x == ConfigJogo.LEFT:
+            self.pos.x += -ConfigJogo.PLAYER_VEL*self.tempo
+        if self.orientation.x == ConfigJogo.RIGHT:
+            self.pos.x += ConfigJogo.PLAYER_VEL*self.tempo
+        
+        ## Testa colisão com o mapa
+        new_top_left_i_j = Vetor2D((0.0005*ConfigJogo.TILE_SIZE.x + self.pos.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,\
+                                (0.0005*ConfigJogo.TILE_SIZE.y + self.pos.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)  
 
-            if self.orientation.y == ConfigJogo.UP:
-                self.pos.y += -ConfigJogo.PLAYER_VEL
-            if self.orientation.y == ConfigJogo.DOWN:
-                self.pos.y += ConfigJogo.PLAYER_VEL
-            if self.orientation.x == ConfigJogo.LEFT:
-                self.pos.x += -ConfigJogo.PLAYER_VEL
-            if self.orientation.x == ConfigJogo.RIGHT:
-                self.pos.x += ConfigJogo.PLAYER_VEL
-            
-            new_top_left_i_j = Vetor2D(1.0005*(self.pos.x-ConfigJogo.ARENA_TOP_LEFT.x)//ConfigJogo.TILE_SIZE.x,\
-                                1.0005*(self.pos.y-ConfigJogo.ARENA_TOP_LEFT.y)//ConfigJogo.TILE_SIZE.y)   
-
-            new_top_left = Vetor2D(ConfigJogo.TILE_SIZE.x*new_top_left_i_j.x+ConfigJogo.ARENA_TOP_LEFT.x,\
+        new_top_left = Vetor2D(ConfigJogo.TILE_SIZE.x*new_top_left_i_j.x+ConfigJogo.ARENA_TOP_LEFT.x,\
                                 ConfigJogo.TILE_SIZE.y*new_top_left_i_j.y+ConfigJogo.ARENA_TOP_LEFT.y)
             
-            for i in range(2):
-                for j in range(2):
-                    if blocos[i+int(new_top_left_i_j.x)][j+int(new_top_left_i_j.y)] != ConfigJogo.EMPTY:
-                        if self.testa_colisao_x(Vetor2D(new_top_left.x + i*ConfigJogo.TILE_SIZE.x,new_top_left.y + j*ConfigJogo.TILE_SIZE.y)):
-                            self.pos.x = self.position.x
-                        
-                        if self.testa_colisao_y(Vetor2D(new_top_left.x + i*ConfigJogo.TILE_SIZE.x,new_top_left.y + j*ConfigJogo.TILE_SIZE.y)):
-                            self.pos.y = self.position.y
-                            
-                        if self.testa_colisao_xy(Vetor2D(new_top_left.x + i*ConfigJogo.TILE_SIZE.x,new_top_left.y + j*ConfigJogo.TILE_SIZE.y)):
-                            self.pos.y = self.position.y
-                            self.pos.x = self.position.x
-                        
-            for bomba in bombas:
-                if self.testa_colisao_x(bomba.position):
-                    if dist(self.pos,bomba.position) < dist(self.position,bomba.position):
-                        if dist(self.pos,bomba.position) > ConfigJogo.TOLERANCIA_BOMBA:    
-                            self.pos.x = self.position.x
-                    
-                if self.testa_colisao_y(bomba.position):
-                    if dist(self.pos,bomba.position) < dist(self.position,bomba.position):
-                        if dist(self.pos,bomba.position) > ConfigJogo.TOLERANCIA_BOMBA:
-                            self.pos.y = self.position.y
-                
-                if self.testa_colisao_xy(bomba.position):
-                    if dist(self.pos,bomba.position) < dist(self.position,bomba.position):
-                        if dist(self.pos,bomba.position) > ConfigJogo.TOLERANCIA_BOMBA:
-                            self.pos.x = self.position.y
-                            self.pos.y = self.position.x
-                    
-            for chama in chamas:
-                if self.testa_colisao_xy(chama.centro):
-                        self.morreu = True
-                            
-                for i in range(1,chama.dim[0]+1):
-                    if self.testa_colisao_xy(Vetor2D(chama.centro.x-i*ConfigJogo.TILE_SIZE.x,chama.centro.y)):
-                            self.morreu = True
-                            
-                for i in range(1,chama.dim[1]+1):
-                    if self.testa_colisao_xy(Vetor2D(chama.centro.x+i*ConfigJogo.TILE_SIZE.x,chama.centro.y)):
-                            self.morreu = True
-                            
-                for i in range(1,chama.dim[2]+1):
-                    if self.testa_colisao_xy(Vetor2D(chama.centro.x,chama.centro.y-i*ConfigJogo.TILE_SIZE.y)):
-                            self.morreu = True
-                            
-                for i in range(1,chama.dim[3]+1):
-                    if self.testa_colisao_xy(Vetor2D(chama.centro.x,chama.centro.y+i*ConfigJogo.TILE_SIZE.y)):
-                            self.morreu = True
+        for i in range(2):
+            for j in range(2):
+                if mapa.blocos[i+int(new_top_left_i_j.x)][j+int(new_top_left_i_j.y)] != ConfigJogo.EMPTY:
+                    self.pos = resultado_colisao(self.position,self.size,self.pos,\
+                        Vetor2D(new_top_left.x + i*ConfigJogo.TILE_SIZE.x,new_top_left.y + j*ConfigJogo.TILE_SIZE.y),ConfigJogo.TILE_SIZE)
+    
+        ## Testa colisão com outros objetos
+        for object in lista:
+            if object.collision:
+                if type(object) == Bomba:
+                    if testa_colisao(self.pos,self.size,object.position,object.size):
+                        if dist(self.pos,object.position) < dist(self.position,object.position):
+                            if dist(self.pos,object.position) > ConfigJogo.TOLERANCIA_BOMBA:
+                                self.pos.x = self.position.x
+                                self.pos.y = self.position.y        
+                  
+        self.position.x = self.pos.x
+        self.position.y = self.pos.y
+        
             
-            
-            
-            
-                
-            self.position.x = self.pos.x
-            self.position.y = self.pos.y
-                    
-        for tempo in self.tempo_bombas:
-            if (self.cronometro_explosao.tempo_passado() - tempo) > ConfigJogo.TEMPO_BOMBA_EXPLOSAO:
-                self.tempo_bombas.remove(tempo)
-                self.bombas_postas -= 1
-                    
-
-    def desenha(self, tela):
-        if not self.morreu:
-            tela.blit(self.img,self.position.as_tuple())
+    def desenhar(self, tela:pg.Surface):
+        tela.blit(self.img,self.position.as_tuple())
